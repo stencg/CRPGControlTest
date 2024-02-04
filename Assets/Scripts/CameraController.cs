@@ -77,11 +77,14 @@ public class CameraController : MonoBehaviour
 		// Zoom
 		var mouseWheel = Input.GetAxis(nameMouseWheel) * cameraWheelSpeed;
 		mouseWheel *= Time.fixedDeltaTime;
-		var newPosition = transform.position + transform.forward * mouseWheel;
-		Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
-		float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
-		if (newDistance <= maxDistance)
-			transform.position = newPosition;
+		if (!Mathf.Approximately(mouseWheel, 0) && controlHeight < maxDistance && controlHeight > minDistance)
+		{
+			var newPosition = transform.position + transform.forward * mouseWheel;
+			Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
+			float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
+			if (newDistance <= maxDistance)
+				transform.position = newPosition;
+		}
 
 		// Follow ground
 		GetWorldGround(Camera.main.transform, 100, layerMask, out Vector3 groundPoint);
