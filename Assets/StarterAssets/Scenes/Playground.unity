@@ -463,11 +463,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   charControllers:
   - {fileID: 77156340}
-  maxDistance: 100
+  maxClickDistance: 100
   layerMask:
     serializedVersion: 2
     m_Bits: 1
   goalMarker: {fileID: 507216127}
+  cameraSpeed: 10
+  cameraWheelSpeed: 700
 --- !u!1 &450311354
 GameObject:
   m_ObjectHideFlags: 0

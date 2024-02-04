@@ -5,9 +5,13 @@ using UnityEngine.Rendering.Universal;
 public class CameraController : MonoBehaviour
 {
     public CharController[] charControllers;
-	public float maxDistance = 100f;
+	public float maxClickDistance = 100f;
 	public LayerMask layerMask;
 	public DecalProjector goalMarker;
+	[Min(1f)] public float cameraSpeed = 5f;
+	[Min(10f)] public float cameraWheelSpeed = 500f;
+
+	const string msWheel = "Mouse ScrollWheel";
 
 	public enum Fade
 	{
@@ -27,9 +31,10 @@ public class CameraController : MonoBehaviour
 
 	void Update()
     {
+		// Smooth movement
 		if (Input.GetMouseButtonDown(0))
 		{
-			bool gotSome = GetWorldPoint(Camera.main, Input.mousePosition, maxDistance, layerMask, out Vector3 position);
+			bool gotSome = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 position);
 			if (gotSome)
 			{
 				charControllers[0].SetOff(position);
@@ -43,7 +48,23 @@ public class CameraController : MonoBehaviour
 				Debug.Log("Nothing");
 			}
 		}
-    }
+		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+		if (Input.GetKey(KeyCode.W))
+			transform.Translate(cameraSpeed * Time.deltaTime * forwardOnGround, Space.World);
+		if (Input.GetKey(KeyCode.S))
+			transform.Translate(cameraSpeed * Time.deltaTime * -forwardOnGround, Space.World);
+		if (Input.GetKey(KeyCode.D))
+			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.right, Space.Self);
+		if (Input.GetKey(KeyCode.A))
+			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.left, Space.Self);
+	}
+	private void FixedUpdate()
+	{	
+		// Framerate independed movement
+		var mouseWheel = Input.GetAxis(msWheel) * cameraWheelSpeed;
+		mouseWheel *= Time.fixedDeltaTime;
+		transform.Translate(Vector3.forward * mouseWheel);
+	}
 	public static bool GetWorldPoint(Camera camera, Vector2 screenPosition, float distance, LayerMask mask, out Vector3 worldPosition)
 	{
 		var ray = camera.ScreenPointToRay(screenPosition);
