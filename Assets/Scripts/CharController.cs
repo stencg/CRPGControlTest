@@ -50,6 +50,7 @@ public class CharController : MonoBehaviour
 			animator.SetBool(isMovingHash, false);
 			navMeshAgent.isStopped = true;
 			navMeshAgent.updateRotation = false;
+			CameraController.Instance.HideMarker();
 			Debug.Log($"{gameObject.name} has arrived", gameObject);
 		}
 	}
