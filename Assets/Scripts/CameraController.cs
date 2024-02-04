@@ -17,6 +17,7 @@ public class CameraController : MonoBehaviour
 	const string nameMouseWheel = "Mouse ScrollWheel";
 	float controlHeight;
 	private Vector3 velocity;
+	CharController selectedPlayer;
 
 	public enum Fade
 	{
@@ -36,11 +37,12 @@ public class CameraController : MonoBehaviour
 
 	private void OnEnable()
 	{
+		selectedPlayer = charControllers[0];
 		bool gotGround = GetWorldGround(Camera.main.transform, 100, layerMask, out Vector3 groundPoint);
 		if (gotGround)
 			controlHeight = transform.position.y - groundPoint.y;
 		else
-			controlHeight = transform.position.y - charControllers[0].transform.position.y;
+			controlHeight = transform.position.y - selectedPlayer.transform.position.y;
 	}
 
 	void Update()
@@ -50,7 +52,7 @@ public class CameraController : MonoBehaviour
 			bool gotPoint = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 clickPoint);
 			if (gotPoint)
 			{
-				charControllers[0].SetOff(clickPoint);
+				selectedPlayer.SetOff(clickPoint);
 				goalMarker.transform.position = clickPoint;
 				ShowMarker();
 				Debug.Log($"Goal: {clickPoint}");
@@ -62,7 +64,7 @@ public class CameraController : MonoBehaviour
 			}
 		}
 
-		var currentCharPoint = new Vector2(charControllers[0].transform.position.x, charControllers[0].transform.position.z);
+		var currentCharPoint = new Vector2(selectedPlayer.transform.position.x, selectedPlayer.transform.position.z);
 		var currentCameraPoint = new Vector2(transform.position.x, transform.position.z);
 		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
 
