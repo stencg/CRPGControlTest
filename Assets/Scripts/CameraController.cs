@@ -11,7 +11,8 @@ public class CameraController : MonoBehaviour
 	[Min(1f)] public float cameraSpeed = 5f;
 	[Min(10f)] public float cameraWheelSpeed = 500f;
 
-	const string msWheel = "Mouse ScrollWheel";
+	const string nameMouseWheel = "Mouse ScrollWheel";
+	float heightDifference;
 
 	public enum Fade
 	{
@@ -29,18 +30,22 @@ public class CameraController : MonoBehaviour
 			Instance = this;
 	}
 
+	private void OnEnable()
+	{
+		heightDifference = transform.position.y - charControllers[0].transform.position.y;
+	}
+
 	void Update()
     {
-		// Smooth movement
 		if (Input.GetMouseButtonDown(0))
 		{
-			bool gotSome = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 position);
-			if (gotSome)
+			bool gotPoint = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 clickPoint);
+			if (gotPoint)
 			{
-				charControllers[0].SetOff(position);
-				goalMarker.transform.position = position;
+				charControllers[0].SetOff(clickPoint);
+				goalMarker.transform.position = clickPoint;
 				ShowMarker();
-				Debug.Log($"Goal: {position}");
+				Debug.Log($"Goal: {clickPoint}");
 			}
 			else
 			{
@@ -48,6 +53,7 @@ public class CameraController : MonoBehaviour
 				Debug.Log("Nothing");
 			}
 		}
+
 		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
 		if (Input.GetKey(KeyCode.W))
 			transform.Translate(cameraSpeed * Time.deltaTime * forwardOnGround, Space.World);
@@ -57,14 +63,24 @@ public class CameraController : MonoBehaviour
 			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.right, Space.Self);
 		if (Input.GetKey(KeyCode.A))
 			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.left, Space.Self);
+
+		var mouseWheel = Input.GetAxis(nameMouseWheel) * cameraWheelSpeed;
+
+		bool gotGround = GetWorldGround(Camera.main.transform, 40, layerMask, out Vector3 groundPoint);
+
+		if (!Mathf.Approximately(mouseWheel, 0))
+		{
+			mouseWheel *= Time.fixedDeltaTime;
+			transform.Translate(Vector3.forward * mouseWheel);
+			heightDifference -= mouseWheel;
+		}
+
+		if (gotGround)
+		{
+			transform.position = new Vector3(transform.position.x, groundPoint.y + heightDifference, transform.position.z);
+		}
 	}
-	private void FixedUpdate()
-	{	
-		// Framerate independed movement
-		var mouseWheel = Input.GetAxis(msWheel) * cameraWheelSpeed;
-		mouseWheel *= Time.fixedDeltaTime;
-		transform.Translate(Vector3.forward * mouseWheel);
-	}
+
 	public static bool GetWorldPoint(Camera camera, Vector2 screenPosition, float distance, LayerMask mask, out Vector3 worldPosition)
 	{
 		var ray = camera.ScreenPointToRay(screenPosition);
@@ -73,10 +89,28 @@ public class CameraController : MonoBehaviour
 		if (raycast)
 		{
 			worldPosition = hit.point;
+			Debug.DrawRay(ray.origin, ray.direction * hit.distance, Color.red);
 			return true;
 		}
 		return false;
 	}
+	public static bool GetWorldGround(Transform origin, float distance, LayerMask mask, out Vector3 worldPosition)
+	{
+		var drawRay = new Ray(origin.position, Vector3.down);
+		// How high above the ground it might be
+		var originOffest = Vector3.up * 100;
+		var ray = new Ray(origin.position + originOffest, Vector3.down);
+		worldPosition = Vector3.zero;
+		var raycast = Physics.Raycast(ray, out var hit, distance + originOffest.y, mask, QueryTriggerInteraction.UseGlobal);
+		if (raycast)
+		{
+			worldPosition = hit.point;
+			Debug.DrawRay(drawRay.origin, drawRay.direction * hit.distance + originOffest, Color.green);
+			return true;
+		}
+		return false;
+	}
+
 	public void ShowMarker()
 	{
 		StopAllCoroutines();
