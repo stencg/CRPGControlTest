@@ -10,9 +10,13 @@ public class CameraController : MonoBehaviour
 	public DecalProjector goalMarker;
 	[Min(1f)] public float cameraSpeed = 5f;
 	[Min(10f)] public float cameraWheelSpeed = 500f;
+	[Min(0f)] public float smoothTime = 0.25f;
+	[Min(10f)] public float maxDistance = 30f;
+	public float minDistance = 10f;
 
 	const string nameMouseWheel = "Mouse ScrollWheel";
-	float heightDifference;
+	float controlHeight;
+	private Vector3 velocity;
 
 	public enum Fade
 	{
@@ -32,7 +36,11 @@ public class CameraController : MonoBehaviour
 
 	private void OnEnable()
 	{
-		heightDifference = transform.position.y - charControllers[0].transform.position.y;
+		bool gotGround = GetWorldGround(Camera.main.transform, 100, layerMask, out Vector3 groundPoint);
+		if (gotGround)
+			controlHeight = transform.position.y - groundPoint.y;
+		else
+			controlHeight = transform.position.y - charControllers[0].transform.position.y;
 	}
 
 	void Update()
@@ -54,30 +62,50 @@ public class CameraController : MonoBehaviour
 			}
 		}
 
+		var currentCharPoint = new Vector2(charControllers[0].transform.position.x, charControllers[0].transform.position.z);
+		var currentCameraPoint = new Vector2(transform.position.x, transform.position.z);
 		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-		if (Input.GetKey(KeyCode.W))
-			transform.Translate(cameraSpeed * Time.deltaTime * forwardOnGround, Space.World);
-		if (Input.GetKey(KeyCode.S))
-			transform.Translate(cameraSpeed * Time.deltaTime * -forwardOnGround, Space.World);
-		if (Input.GetKey(KeyCode.D))
-			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.right, Space.Self);
-		if (Input.GetKey(KeyCode.A))
-			transform.Translate(cameraSpeed * Time.deltaTime * Vector3.left, Space.Self);
 
+		// Move
+		MoveCamera(KeyCode.W, forwardOnGround, currentCharPoint, currentCameraPoint);
+		MoveCamera(KeyCode.S, -forwardOnGround, currentCharPoint, currentCameraPoint);
+		MoveCamera(KeyCode.D, transform.right, currentCharPoint, currentCameraPoint);
+		MoveCamera(KeyCode.A, -transform.right, currentCharPoint, currentCameraPoint);
+
+		// Zoom
 		var mouseWheel = Input.GetAxis(nameMouseWheel) * cameraWheelSpeed;
+		mouseWheel *= Time.fixedDeltaTime;
+		var newPosition = transform.position + transform.forward * mouseWheel;
+		Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
+		float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
+		if (newDistance <= maxDistance)
+			transform.position = newPosition;
 
-		bool gotGround = GetWorldGround(Camera.main.transform, 40, layerMask, out Vector3 groundPoint);
-
-		if (!Mathf.Approximately(mouseWheel, 0))
+		// Follow ground
+		GetWorldGround(Camera.main.transform, 100, layerMask, out Vector3 groundPoint);
+		var desiredHeight = new Vector3(transform.position.x, groundPoint.y + controlHeight, transform.position.z);
+		if (controlHeight <= maxDistance)
 		{
-			mouseWheel *= Time.fixedDeltaTime;
-			transform.Translate(Vector3.forward * mouseWheel);
-			heightDifference -= mouseWheel;
+			transform.position = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
 		}
+		if (!Mathf.Approximately(mouseWheel, 0))
+			controlHeight -= mouseWheel;
+		controlHeight = Mathf.Clamp(controlHeight, minDistance, maxDistance);
 
-		if (gotGround)
+	}
+
+	void MoveCamera(KeyCode key, Vector3 direction, Vector2 currentCharPoint, Vector2 currentCameraPoint)
+	{
+		if (Input.GetKey(key))
 		{
-			transform.position = new Vector3(transform.position.x, groundPoint.y + heightDifference, transform.position.z);
+			Vector3 newPosition = transform.position + cameraSpeed * Time.deltaTime * direction;
+			Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
+
+			float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
+			if (newDistance <= maxDistance || newDistance < Vector2.Distance(currentCameraPoint, currentCharPoint))
+			{
+				transform.position = newPosition;
+			}
 		}
 	}
 
