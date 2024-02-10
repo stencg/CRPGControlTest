@@ -476,9 +476,9 @@ MonoBehaviour:
   goalMarker: {fileID: 507216127}
   cameraSpeed: 10
   cameraShiftSpeed: 5
-  cameraWheelSpeed: 700
+  cameraWheelSpeed: 1000
   smoothTime: 0.25
-  maxDistance: 50
+  maxDistance: 70
   minDistance: 10
 --- !u!1 &450311354
 GameObject:
