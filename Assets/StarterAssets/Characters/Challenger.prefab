@@ -236,6 +236,7 @@ MonoBehaviour:
   navMeshAgent: {fileID: 6252389409175930697}
   goal: {fileID: 0}
   animator: {fileID: 2792187804381646638}
+  runDistance: 4
 --- !u!195 &6252389409175930697
 NavMeshAgent:
   m_ObjectHideFlags: 0

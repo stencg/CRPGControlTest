@@ -85,11 +85,12 @@ public class CameraController : MonoBehaviour
 		}
 
 		// Limit by ground
-		GetWorldGround(Camera.main.transform, 100, layerMask, out Vector3 groundPoint);
+		GetWorldGround(Camera.main.transform, minDistance, layerMask, out Vector3 groundPoint);
 		var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minDistance, transform.position.z);
 		if (currentHeight - groundPoint.y < minDistance)
 		{
 			transform.position = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
+			currentHeight = transform.position.y;
 		}
 
 		if (!Mathf.Approximately(mouseWheel, 0))

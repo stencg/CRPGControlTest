@@ -7,13 +7,16 @@ public class CharController : MonoBehaviour
     public NavMeshAgent navMeshAgent;
 	public Transform goal;
     public Animator animator;
+	[Min(1f)]public float runDistance = 4f;
 
-	private int isMovingHash;
+	private int isMovingHash, runBlendHash;
 	private bool isMoving, called;
+	private float velocity;
 
 	private void Awake()
 	{
 		isMovingHash = Animator.StringToHash("IsMoving");
+		runBlendHash = Animator.StringToHash("Blend");
 		animator.applyRootMotion = false;
 	}
 
@@ -25,7 +28,14 @@ public class CharController : MonoBehaviour
 
 	public virtual void OnAnimatorMove()
 	{
-		navMeshAgent.speed = (animator.deltaPosition / Time.deltaTime).magnitude;
+		if (isMoving)
+		{
+;			navMeshAgent.speed = (animator.deltaPosition / Time.deltaTime).magnitude;
+			var currentBlend = animator.GetFloat(runBlendHash);
+			bool needRun = navMeshAgent.remainingDistance > runDistance;
+			animator.SetFloat(runBlendHash, needRun
+				? Mathf.SmoothDamp(currentBlend, 1, ref velocity, 0.7f) : Mathf.SmoothDamp(currentBlend, 0, ref velocity, 0.7f));
+		}
 	}
 
 	void Update()
