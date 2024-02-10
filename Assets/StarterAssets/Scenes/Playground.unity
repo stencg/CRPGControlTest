@@ -478,8 +478,8 @@ MonoBehaviour:
   cameraShiftSpeed: 5
   cameraWheelSpeed: 1000
   smoothTime: 0.25
-  maxDistance: 70
-  minDistance: 10
+  maxHeight: 70
+  minHeight: 10
 --- !u!1 &450311354
 GameObject:
   m_ObjectHideFlags: 0

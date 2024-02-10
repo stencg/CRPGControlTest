@@ -12,11 +12,10 @@ public class CameraController : MonoBehaviour
 	[Min(2f)] public float cameraShiftSpeed = 5f;
 	[Min(10f)] public float cameraWheelSpeed = 500f;
 	[Min(0f)] public float smoothTime = 0.25f;
-	[Min(10f)] public float maxDistance = 30f;
-	public float minDistance = 10f;
+	[Min(10f)] public float maxHeight = 30f;
+	public float minHeight = 10f;
 
 	const string nameMouseWheel = "Mouse ScrollWheel";
-	float currentHeight;
 	private Vector3 velocity;
 	CharController selectedPlayer;
 
@@ -39,7 +38,6 @@ public class CameraController : MonoBehaviour
 	private void OnEnable()
 	{
 		selectedPlayer = charControllers[0];
-		currentHeight = transform.position.y;
 	}
 
 	void Update()
@@ -75,28 +73,27 @@ public class CameraController : MonoBehaviour
 		// Zoom
 		var mouseWheel = Input.GetAxis(nameMouseWheel) * cameraWheelSpeed;
 		mouseWheel *= Time.fixedDeltaTime;
-		if (!Mathf.Approximately(mouseWheel, 0) && currentHeight < maxDistance && currentHeight > minDistance)
+
+		if (!Mathf.Approximately(mouseWheel, 0))
 		{
+			var groundHit = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundHitPoint);
 			var newPosition = transform.position + transform.forward * mouseWheel;
-			Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
-			float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
-			if (newDistance <= maxDistance)
+			float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : selectedPlayer.transform.position);
+			if (newDistance <= maxHeight && newDistance >= minHeight)
 				transform.position = newPosition;
 		}
 
 		// Limit by ground
-		var ground = GetWorldGround(Camera.main.transform, minDistance, layerMask, out Vector3 groundPoint);
-		if (ground && transform.position.y - groundPoint.y < minDistance)
+		var ground = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundPoint);
+		if (ground)
 		{
-			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minDistance, transform.position.z);
-			transform.position = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
-			currentHeight = transform.position.y;
+			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
+			var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
+			if (transform.position.y - groundPoint.y <= minHeight)
+			{
+				transform.position = newPosition;
+			}	
 		}
-
-		if (!Mathf.Approximately(mouseWheel, 0))
-			currentHeight -= mouseWheel;
-		currentHeight = Mathf.Clamp(currentHeight, minDistance, maxDistance);
-
 	}
 
 	void MoveCamera(KeyCode key, Vector3 direction, Vector2 currentCharPoint, Vector2 currentCameraPoint, float speed)
@@ -107,7 +104,7 @@ public class CameraController : MonoBehaviour
 			Vector2 newCameraPoint = new Vector2(newPosition.x, newPosition.z);
 
 			float newDistance = Vector2.Distance(newCameraPoint, currentCharPoint);
-			if (newDistance <= maxDistance || newDistance < Vector2.Distance(currentCameraPoint, currentCharPoint))
+			if (newDistance <= maxHeight || newDistance < Vector2.Distance(currentCameraPoint, currentCharPoint))
 			{
 				transform.position = newPosition;
 			}
