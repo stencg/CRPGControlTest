@@ -1,17 +1,17 @@
 fileFormatVersion: 2
-guid: c5eea4804edc9794fa6c7a29709d4173
+guid: 3bfc22ca4e55d4945b26a68767a7ed04
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable:
   - first:
       1: 100000
-    second: Chest
+    second: //RootNode
   - first:
       1: 100002
-    second: chestProxy_geo
+    second: Chest
   - first:
       1: 100004
-    second: //RootNode
+    second: chestProxy_geo
   - first:
       1: 100006
     second: Head
@@ -449,13 +449,13 @@ ModelImporter:
     second: UNI_01_Upper_teethProxy
   - first:
       4: 400000
-    second: Chest
+    second: //RootNode
   - first:
       4: 400002
-    second: chestProxy_geo
+    second: Chest
   - first:
       4: 400004
-    second: //RootNode
+    second: chestProxy_geo
   - first:
       4: 400006
     second: Head
@@ -1415,7 +1415,10 @@ ModelImporter:
     second: l_hipProxy_geo
   - first:
       74: 7400000
-    second: Walk
+    second: PlantNTurnRigtht90
+  - first:
+      74: 7400002
+    second: PlantNTurneft90
   - first:
       95: 9500000
     second: //RootNode
@@ -1429,11 +1432,13 @@ ModelImporter:
     legacyGenerateAnimations: 4
     bakeSimulation: 0
     resampleCurves: 1
-    optimizeGameObjects: 1
+    optimizeGameObjects: 0
     removeConstantScaleCurves: 0
     motionNodeName: 
     rigImportErrors: 
-    rigImportWarnings: 
+    rigImportWarnings: "Copied Avatar Rig Configuration mis-match. Bone length in
+      copied configuration does not match position in animation file:\n\t'LeftLeg'
+      : position error = 7.696520 mm\n\t'LeftFoot' : position error = 15.233778 mm\n"
     animationImportErrors: 
     animationImportWarnings: 
     animationRetargetingWarnings: 
@@ -1449,19 +1454,48 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Walk
-      takeName: _1_a_U1_M_P_WalkForward_NtrlFaceFwd__Fb_p0_No_0_PJ_3
+      name: PlantNTurnRigtht90
+      takeName: _72_a_U1_M_P_PlantNTurn90_Run_R_Fb_p90_No_0_PJ_4
       internalID: 0
-      firstFrame: 215.2
-      lastFrame: 244.9
+      firstFrame: 127.2
+      lastFrame: 174.4
       wrapMode: 0
-      orientationOffsetY: 3.3
+      orientationOffsetY: 0
       level: 0
-      cycleOffset: -0
+      cycleOffset: 0
       loop: 0
       hasAdditiveReferencePose: 0
-      loopTime: 1
-      loopBlend: 1
+      loopTime: 0
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 1
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 0
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 1
+      mirror: 1
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: PlantNTurneft90
+      takeName: _72_a_U1_M_P_PlantNTurn90_Run_R_Fb_p90_No_0_PJ_4
+      internalID: 0
+      firstFrame: 127.2
+      lastFrame: 174.4
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 0
+      loopBlend: 0
       loopBlendOrientation: 0
       loopBlendPositionY: 1
       loopBlendPositionXZ: 0
