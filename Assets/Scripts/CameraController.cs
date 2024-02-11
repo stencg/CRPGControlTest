@@ -63,12 +63,9 @@ public class CameraController : MonoBehaviour
 			}
 		}
 
-		var playerPosition = selectedPlayer.transform.position;
-		var currentCharPoint = new Vector2(playerPosition.x, playerPosition.z);
-		var thisTransform = transform;
-		var position = thisTransform.position;
-		var currentCameraPoint = new Vector2(position.x, position.z);
-		var forwardOnGround = Vector3.ProjectOnPlane(thisTransform.forward, Vector3.up).normalized;
+		var currentCharPoint = new Vector2(selectedPlayer.transform.position.x, selectedPlayer.transform.position.z);
+		var currentCameraPoint = new Vector2(transform.position.x, transform.position.z);
+		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
 
 		// Move
 		var speed = Input.GetKey(KeyCode.LeftShift) ? cameraSpeed * cameraShiftSpeed : cameraSpeed;
@@ -78,14 +75,13 @@ public class CameraController : MonoBehaviour
 		MoveCamera(KeyCode.A, -transform.right, currentCharPoint, currentCameraPoint, speed);
 
 		// Zoom
-		var mouseWheel = Input.GetAxis(nameMouseWheel) * cameraWheelSpeed;
-		mouseWheel *= Time.fixedDeltaTime;
-
+		var mouseWheel = Input.GetAxis(nameMouseWheel);
 		if (!Mathf.Approximately(mouseWheel, 0))
 		{
+			mouseWheel *= Time.fixedDeltaTime * cameraWheelSpeed;
 			var groundHit = GetWorldGround(camera.transform, minHeight, layerMask, out Vector3 groundHitPoint);
-			var newPosition = transform.position + thisTransform.forward * mouseWheel;
-			float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : playerPosition);
+			var newPosition = transform.position + transform.forward * mouseWheel;
+			float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : selectedPlayer.transform.position);
 			if (newDistance <= maxHeight && newDistance >= minHeight)
 				transform.position = newPosition;
 		}
@@ -94,8 +90,8 @@ public class CameraController : MonoBehaviour
 		var ground = GetWorldGround(camera.transform, minHeight, layerMask, out Vector3 groundPoint);
 		if (ground)
 		{
-			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, position.z);
-			var newPosition = Vector3.SmoothDamp(position, desiredHeight, ref velocity, smoothTime);
+			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
+			var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
 			if (transform.position.y - groundPoint.y <= minHeight)
 			{
 				transform.position = newPosition;
