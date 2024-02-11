@@ -18,6 +18,7 @@ public class CameraController : MonoBehaviour
 	const string nameMouseWheel = "Mouse ScrollWheel";
 	private Vector3 velocity;
 	CharController selectedPlayer;
+	private Camera camera;
 
 	public enum Fade
 	{
@@ -32,7 +33,10 @@ public class CameraController : MonoBehaviour
 			Destroy(this);
 		
 		else
+		{
 			Instance = this;
+			camera = Camera.main;
+		}
 	}
 
 	private void OnEnable()
@@ -44,7 +48,7 @@ public class CameraController : MonoBehaviour
     {
 		if (Input.GetMouseButtonDown(0))
 		{
-			bool gotPoint = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 clickPoint);
+			bool gotPoint = GetWorldPoint(camera, Input.mousePosition, maxClickDistance, layerMask, out Vector3 clickPoint);
 			if (gotPoint)
 			{
 				selectedPlayer.SetOff(clickPoint);
@@ -59,9 +63,12 @@ public class CameraController : MonoBehaviour
 			}
 		}
 
-		var currentCharPoint = new Vector2(selectedPlayer.transform.position.x, selectedPlayer.transform.position.z);
-		var currentCameraPoint = new Vector2(transform.position.x, transform.position.z);
-		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+		var playerPosition = selectedPlayer.transform.position;
+		var currentCharPoint = new Vector2(playerPosition.x, playerPosition.z);
+		var thisTransform = transform;
+		var position = thisTransform.position;
+		var currentCameraPoint = new Vector2(position.x, position.z);
+		var forwardOnGround = Vector3.ProjectOnPlane(thisTransform.forward, Vector3.up).normalized;
 
 		// Move
 		var speed = Input.GetKey(KeyCode.LeftShift) ? cameraSpeed * cameraShiftSpeed : cameraSpeed;
@@ -76,19 +83,19 @@ public class CameraController : MonoBehaviour
 
 		if (!Mathf.Approximately(mouseWheel, 0))
 		{
-			var groundHit = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundHitPoint);
-			var newPosition = transform.position + transform.forward * mouseWheel;
-			float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : selectedPlayer.transform.position);
+			var groundHit = GetWorldGround(camera.transform, minHeight, layerMask, out Vector3 groundHitPoint);
+			var newPosition = transform.position + thisTransform.forward * mouseWheel;
+			float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : playerPosition);
 			if (newDistance <= maxHeight && newDistance >= minHeight)
 				transform.position = newPosition;
 		}
 
 		// Limit by ground
-		var ground = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundPoint);
+		var ground = GetWorldGround(camera.transform, minHeight, layerMask, out Vector3 groundPoint);
 		if (ground)
 		{
-			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
-			var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
+			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, position.z);
+			var newPosition = Vector3.SmoothDamp(position, desiredHeight, ref velocity, smoothTime);
 			if (transform.position.y - groundPoint.y <= minHeight)
 			{
 				transform.position = newPosition;
@@ -126,10 +133,11 @@ public class CameraController : MonoBehaviour
 	}
 	public static bool GetWorldGround(Transform origin, float distance, LayerMask mask, out Vector3 worldPosition)
 	{
-		var drawRay = new Ray(origin.position, Vector3.down);
+		var position = origin.position;
+		var drawRay = new Ray(position, Vector3.down);
 		// How high above the ground it might be
 		var originOffest = Vector3.up * 100;
-		var ray = new Ray(origin.position + originOffest, Vector3.down);
+		var ray = new Ray(position + originOffest, Vector3.down);
 		worldPosition = Vector3.zero;
 		var raycast = Physics.Raycast(ray, out var hit, distance + originOffest.y, mask, QueryTriggerInteraction.UseGlobal);
 		if (raycast)
