@@ -1,22 +1,20 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.iOS;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UIElements;
 
 public class CameraController : MonoBehaviour
 {
-    [SerializeField] private InputActionReference moveCameraAction;
-	[SerializeField] private InputActionReference zoomAction;
+    [SerializeField] private InputActionReference moveCameraAction, zoomAction, shiftCameraSpeedAction, cursorAction;
 
 	public CharController[] charControllers;
 	public float maxClickDistance = 100f;
 	public LayerMask layerMask;
 	public DecalProjector goalMarker;
-	[Min(1f)] public float cameraSpeed = 5f;
-	[Min(2f)] public float cameraShiftSpeed = 5f;
-	[Min(10f)] public float cameraWheelSpeed = 500f;
+	[Min(1f)] public float cameraSpeed = 20f;
+	[Min(2f)] public float cameraShiftSpeedFactor = 2f;
+	public float zoomSpeed = 100f;
 	[Min(0f)] public float smoothTime = 0.25f;
 	[Min(10f)] public float maxHeight = 30f;
 	[Min(10f)] public float maxDistance = 70f;
@@ -24,8 +22,10 @@ public class CameraController : MonoBehaviour
 
 	const string nameMouseWheel = "Mouse ScrollWheel";
 	private Vector3 velocity;
-	private Vector2 move;
+	private Vector2 moveCamera, moveCursor;
 	private float zoom;
+	private float shiftMoveSpeed;
+	public PlayerInput playerInput;
 	CharController selectedPlayer;
 
 	public enum Fade
@@ -48,7 +48,19 @@ public class CameraController : MonoBehaviour
 		moveCameraAction.action.started += OnMove;
 		moveCameraAction.action.performed += OnMove;
 		moveCameraAction.action.canceled += OnMove;
+
+		zoomAction.action.started += Zoom;
 		zoomAction.action.performed += Zoom;
+		zoomAction.action.canceled += Zoom;
+
+		shiftCameraSpeedAction.action.performed += ShiftMoveSpeed;
+		shiftCameraSpeedAction.action.canceled += ShiftMoveSpeed;
+
+		cursorAction.action.started += CursorMove;
+		cursorAction.action.performed += CursorMove;
+		cursorAction.action.canceled += CursorMove;
+
+		playerInput.onControlsChanged += OnControlsChanged;
 	}
 
 	private void OnEnable()
@@ -62,18 +74,29 @@ public class CameraController : MonoBehaviour
 		moveCameraAction.action.started -= OnMove;
 		moveCameraAction.action.performed -= OnMove;
 		moveCameraAction.action.canceled -= OnMove;
-		zoomAction.action.performed -= Zoom;
+
+		zoomAction.action.started -= Zoom;
+		zoomAction.action.performed += Zoom;
+		zoomAction.action.canceled += Zoom;
+
+		shiftCameraSpeedAction.action.performed -= ShiftMoveSpeed;
+		shiftCameraSpeedAction.action.canceled -= ShiftMoveSpeed;
+
+		cursorAction.action.started -= CursorMove;
+		cursorAction.action.performed -= CursorMove;
+		cursorAction.action.canceled -= CursorMove;
+
+		 playerInput.onControlsChanged -= OnControlsChanged;
 	}
 
 	void Update()
 	{
-		if (move.sqrMagnitude > 0) MoveCamera(move);
+		if (moveCamera.sqrMagnitude > 0) MoveCamera(moveCamera);
 
 		// Zoom
-		var mouseWheel = Input.GetAxis(nameMouseWheel);
-		if (!Mathf.Approximately(mouseWheel, 0))
+		if (!Mathf.Approximately(zoom, 0))
 		{
-			mouseWheel *= Time.fixedDeltaTime * cameraWheelSpeed;
+			var mouseWheel = Time.fixedDeltaTime * zoomSpeed * zoom;
 			var groundHit = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundHitPoint);
 			//var desiredHeight = transform.position + transform.forward * mouseWheel;
 			//var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
@@ -87,9 +110,8 @@ public class CameraController : MonoBehaviour
 		var ground = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundPoint);
 		if (ground)
 		{
-			//var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
-			//var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
-			var newPosition = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
+			var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
+			var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
 			if (transform.position.y - groundPoint.y <= minHeight)
 			{
 				transform.position = newPosition;
@@ -114,21 +136,35 @@ public class CameraController : MonoBehaviour
 		}
 	}
 
+	private void OnControlsChanged(PlayerInput input)
+    {
+        Debug.Log("Control Scheme Changed: " + input.currentControlScheme);
+    }
+
 	private void OnMove(InputAction.CallbackContext context)
     {
-        move = context.ReadValue<Vector2>();
+        moveCamera = context.ReadValue<Vector2>();
+    }
+
+	private void CursorMove(InputAction.CallbackContext context)
+    {
+        moveCursor = context.ReadValue<Vector2>();
     }
 	
 	private void Zoom(InputAction.CallbackContext context)
 	{
-		zoom = context.ReadValue<float>();
-		Debug.Log(zoom);
+		zoom = Mathf.Clamp(context.ReadValue<Vector2>().y, -1, 1);
 	}
+
+	private void ShiftMoveSpeed(InputAction.CallbackContext context)
+    {
+        shiftMoveSpeed = context.ReadValue<float>();
+    }
 
 	void MoveCamera(Vector3 direction)
 	{
 		var forwardOnGround = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
-		var speed = Input.GetKey(KeyCode.LeftShift) ? cameraSpeed * cameraShiftSpeed : cameraSpeed;
+		var speed = shiftMoveSpeed > 0 ? cameraSpeed * cameraShiftSpeedFactor : cameraSpeed;
         var forwardMovement = forwardOnGround * direction.y;
         var horizontalMovement = transform.right * direction.x;
 		// Combine movements and scale by speed

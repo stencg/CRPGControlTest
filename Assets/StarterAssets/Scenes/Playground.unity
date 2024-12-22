@@ -571,6 +571,10 @@ MonoBehaviour:
     type: 3}
   zoomAction: {fileID: 7565974161679418073, guid: 58e305f0c19add942ac59d18fa72d7bd,
     type: 3}
+  shiftCameraSpeedAction: {fileID: 4161132716060506917, guid: 58e305f0c19add942ac59d18fa72d7bd,
+    type: 3}
+  cursorAction: {fileID: 4383439290283188579, guid: 58e305f0c19add942ac59d18fa72d7bd,
+    type: 3}
   charControllers:
   - {fileID: 906921657}
   maxClickDistance: 100
@@ -578,13 +582,14 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   goalMarker: {fileID: 507216127}
-  cameraSpeed: 10
-  cameraShiftSpeed: 5
-  cameraWheelSpeed: 1000
+  cameraSpeed: 20
+  cameraShiftSpeedFactor: 2
+  zoomSpeed: 80
   smoothTime: 0.25
   maxHeight: 70
   maxDistance: 70
   minHeight: 10
+  playerInput: {fileID: 360214021}
 --- !u!114 &360214021
 MonoBehaviour:
   m_ObjectHideFlags: 0
