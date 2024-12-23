@@ -22,7 +22,7 @@ public class CameraController : MonoBehaviour
 
 	const string nameMouseWheel = "Mouse ScrollWheel", keyboardScheme = "Keyboard", gamepadScheme = "Gamepad";
 	private Vector3 velocity;
-	private Vector2 moveCamera, cursorPosition;
+	private Vector2 moveCamera, cursorPosition, pointerPosition;
 	private float zoom;
 	private float shiftMoveSpeed;
 	private bool gamepadController;
@@ -122,11 +122,16 @@ public class CameraController : MonoBehaviour
 				transform.position = newPosition;
 			}	
 		}
+		if (gamepadController && cursorPosition.magnitude > 0)
+		{ 
+			pointer.transform.Translate(Time.deltaTime * gamepadPointerSpeed * cursorPosition);
+			pointerPosition = pointer.transform.position;
+		}
 	}
 
 	private void Select(InputAction.CallbackContext context)
 	{
-		bool gotPoint = GetWorldPoint(Camera.main, cursorPosition, maxClickDistance, layerMask, out Vector3 clickPoint);
+		bool gotPoint = GetWorldPoint(Camera.main, gamepadController ? pointerPosition : cursorPosition, maxClickDistance, layerMask, out Vector3 clickPoint);
 		if (gotPoint)
 		{
 			selectedPlayer.SetOff(clickPoint);
@@ -159,12 +164,7 @@ public class CameraController : MonoBehaviour
 
 	private void CursorMove(InputAction.CallbackContext context)
     {
-        if (gamepadController)
-		{ 
-			pointer.transform.Translate(Time.deltaTime * gamepadPointerSpeed * context.ReadValue<Vector2>());
-			cursorPosition = pointer.transform.position;
-		}
-		else cursorPosition = context.ReadValue<Vector2>();
+        cursorPosition = context.ReadValue<Vector2>();
 		//Debug.Log($"CursorMove {cursorPosition}");
     }
 	
