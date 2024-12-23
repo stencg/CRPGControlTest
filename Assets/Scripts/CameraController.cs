@@ -6,8 +6,8 @@ using UnityEngine.UIElements;
 
 public class CameraController : MonoBehaviour
 {
-    [SerializeField] private InputActionReference moveCameraAction, zoomAction, shiftCameraSpeedAction, cursorAction;
-
+    [SerializeField] private InputActionReference moveCameraAction, zoomAction, shiftCameraSpeedAction, cursorAction, selectAction;
+	[SerializeField] private GameObject pointer;
 	public CharController[] charControllers;
 	public float maxClickDistance = 100f;
 	public LayerMask layerMask;
@@ -15,16 +15,17 @@ public class CameraController : MonoBehaviour
 	[Min(1f)] public float cameraSpeed = 20f;
 	[Min(2f)] public float cameraShiftSpeedFactor = 2f;
 	public float zoomSpeed = 100f;
-	[Min(0f)] public float smoothTime = 0.25f;
+	[Min(0f)] public float smoothTime = 0.25f, gamepadPointerSpeed = 1f;
 	[Min(10f)] public float maxHeight = 30f;
 	[Min(10f)] public float maxDistance = 70f;
 	public float minHeight = 10f;
 
-	const string nameMouseWheel = "Mouse ScrollWheel";
+	const string nameMouseWheel = "Mouse ScrollWheel", keyboardScheme = "Keyboard", gamepadScheme = "Gamepad";
 	private Vector3 velocity;
-	private Vector2 moveCamera, moveCursor;
+	private Vector2 moveCamera, cursorPosition;
 	private float zoom;
 	private float shiftMoveSpeed;
+	private bool gamepadController;
 	public PlayerInput playerInput;
 	CharController selectedPlayer;
 
@@ -60,6 +61,8 @@ public class CameraController : MonoBehaviour
 		cursorAction.action.performed += CursorMove;
 		cursorAction.action.canceled += CursorMove;
 
+		selectAction.action.started += Select;
+
 		playerInput.onControlsChanged += OnControlsChanged;
 	}
 
@@ -86,7 +89,9 @@ public class CameraController : MonoBehaviour
 		cursorAction.action.performed -= CursorMove;
 		cursorAction.action.canceled -= CursorMove;
 
-		 playerInput.onControlsChanged -= OnControlsChanged;
+		selectAction.action.started -= Select;
+
+		playerInput.onControlsChanged -= OnControlsChanged;
 	}
 
 	void Update()
@@ -117,28 +122,34 @@ public class CameraController : MonoBehaviour
 				transform.position = newPosition;
 			}	
 		}
+	}
 
-		if (Input.GetMouseButtonDown(0))
+	private void Select(InputAction.CallbackContext context)
+	{
+		bool gotPoint = GetWorldPoint(Camera.main, cursorPosition, maxClickDistance, layerMask, out Vector3 clickPoint);
+		if (gotPoint)
 		{
-			bool gotPoint = GetWorldPoint(Camera.main, Input.mousePosition, maxClickDistance, layerMask, out Vector3 clickPoint);
-			if (gotPoint)
-			{
-				selectedPlayer.SetOff(clickPoint);
-				goalMarker.transform.position = clickPoint;
-				ShowMarker();
-				Debug.Log($"Goal: {clickPoint}");
-			}
-			else
-			{
-				HideMarker();
-				Debug.Log("Nothing");
-			}
+			selectedPlayer.SetOff(clickPoint);
+			goalMarker.transform.position = clickPoint;
+			ShowMarker();
+			Debug.Log($"Goal: {clickPoint}");
+		}
+		else
+		{
+			HideMarker();
+			Debug.Log("Nothing");
 		}
 	}
 
 	private void OnControlsChanged(PlayerInput input)
     {
         Debug.Log("Control Scheme Changed: " + input.currentControlScheme);
+		switch (input.currentControlScheme)
+		{
+			case gamepadScheme: gamepadController = true; break;
+			default: gamepadController = false; break;
+		}
+		pointer.SetActive(gamepadController);
     }
 
 	private void OnMove(InputAction.CallbackContext context)
@@ -148,7 +159,13 @@ public class CameraController : MonoBehaviour
 
 	private void CursorMove(InputAction.CallbackContext context)
     {
-        moveCursor = context.ReadValue<Vector2>();
+        if (gamepadController)
+		{ 
+			pointer.transform.Translate(Time.deltaTime * gamepadPointerSpeed * context.ReadValue<Vector2>());
+			cursorPosition = pointer.transform.position;
+		}
+		else cursorPosition = context.ReadValue<Vector2>();
+		//Debug.Log($"CursorMove {cursorPosition}");
     }
 	
 	private void Zoom(InputAction.CallbackContext context)
