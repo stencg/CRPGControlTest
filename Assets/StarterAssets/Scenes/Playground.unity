@@ -589,7 +589,7 @@ MonoBehaviour:
   cameraShiftSpeedFactor: 2
   zoomSpeed: 80
   smoothTime: 0.25
-  gamepadPointerSpeed: 120
+  gamepadPointerSpeed: 1200
   maxHeight: 70
   maxDistance: 70
   minHeight: 10
