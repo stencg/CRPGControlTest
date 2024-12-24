@@ -2,39 +2,38 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.UIElements;
 
-public class CameraController : MonoBehaviour
+public class MyCameraController : MonoBehaviour
 {
-    [SerializeField] private InputActionReference moveCameraAction, zoomAction, shiftCameraSpeedAction, cursorAction, selectAction;
-	[SerializeField] private GameObject pointer;
-	public CharController[] charControllers;
-	public float maxClickDistance = 100f;
-	public LayerMask layerMask;
-	public DecalProjector goalMarker;
-	[Min(1f)] public float cameraSpeed = 20f;
-	[Min(2f)] public float cameraShiftSpeedFactor = 2f;
-	public float zoomSpeed = 100f;
-	[Min(0f)] public float smoothTime = 0.25f, gamepadPointerSpeed = 1f;
-	[Min(10f)] public float maxHeight = 30f;
-	[Min(10f)] public float maxDistance = 70f;
-	public float minHeight = 10f;
+    [SerializeField] InputActionReference moveCameraAction, zoomAction, shiftCameraSpeedAction, cursorAction, selectAction;
+	[SerializeField] GameObject pointer;
+	[SerializeField] MyCharacterController[] charControllers;
+	[SerializeField] float maxClickDistance = 100f;
+	[SerializeField] LayerMask layerMask;
+	[SerializeField] DecalProjector goalMarker;
+	[SerializeField] [Min(1f)] float cameraSpeed = 20f;
+	[SerializeField] [Min(2f)] float cameraShiftSpeedFactor = 2f;
+	[SerializeField] [Min(0f)] float smoothTime = 0.25f, gamepadPointerSpeed = 1f;
+	[SerializeField] float zoomSpeed = 100f, minHeight = 10f;
+	[SerializeField] [Min(10f)] float maxHeight = 30f;
+	[SerializeField] [Min(10f)] float maxDistance = 70f;
+	[SerializeField] PlayerInput playerInput;
 
-	const string nameMouseWheel = "Mouse ScrollWheel", keyboardScheme = "Keyboard", gamepadScheme = "Gamepad";
 	private Vector3 velocity;
 	private Vector2 moveCamera, cursorPosition, pointerPosition;
 	private float zoom;
 	private float shiftMoveSpeed;
 	private bool gamepadController;
-	public PlayerInput playerInput;
-	CharController selectedPlayer;
+	private MyCharacterController selectedPlayer;
+
+	const string nameMouseWheel = "Mouse ScrollWheel", keyboardScheme = "Keyboard", gamepadScheme = "Gamepad";
 
 	public enum Fade
 	{
 		In, Out
 	}
 
-	public static CameraController Instance { get; private set; }
+	public static MyCameraController Instance { get; private set; }
 
 	private void Awake()
 	{

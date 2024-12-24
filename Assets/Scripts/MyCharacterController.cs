@@ -2,12 +2,12 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(Animator))]
-public class CharController : MonoBehaviour
+public class MyCharacterController : MonoBehaviour
 {
-    public NavMeshAgent navMeshAgent;
-	public Transform goal;
-    public Animator animator;
-	[Min(1f)]public float runDistance = 4f;
+    [SerializeField] NavMeshAgent navMeshAgent;
+	[SerializeField] Transform goal;
+    [SerializeField] Animator animator;
+	[SerializeField] [Min(1f)]public float runDistance = 4f;
 
 	private int isMovingHash, runBlendHash;
 	private bool isMoving, called;
@@ -60,7 +60,7 @@ public class CharController : MonoBehaviour
 			animator.SetBool(isMovingHash, false);
 			navMeshAgent.isStopped = true;
 			navMeshAgent.updateRotation = false;
-			CameraController.Instance.HideMarker();
+			MyCameraController.Instance.HideMarker();
 			Debug.Log($"{gameObject.name} has arrived", gameObject);
 		}
 	}
