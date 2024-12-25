@@ -21,7 +21,7 @@ namespace Assets.Scripts
 		[SerializeField] PlayerInput playerInput;
 
 		private Vector3 velocity;
-		private Vector2 moveCamera, cursorPosition;
+		private Vector2 moveCamera, cursorPosition, offsetXZ;
 		private float zoom;
 		private float shiftMoveSpeed;
 		private bool gamepadController;
@@ -106,32 +106,25 @@ namespace Assets.Scripts
 		}
 		void Update()
 		{
-			if (moveCamera.sqrMagnitude > 0) MoveCamera(moveCamera);
-
-			// Zoom
-			if (!Mathf.Approximately(zoom, 0))
+			if (moveCamera.sqrMagnitude > 0 || !Mathf.Approximately(zoom, 0)) 
 			{
-				var mouseWheel = Time.fixedDeltaTime * zoomSpeed * zoom;
-				var groundHit = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundHitPoint);
-				//var desiredHeight = transform.position + transform.forward * mouseWheel;
-				//var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
-				var newPosition = transform.position + transform.forward * mouseWheel;
-				float newDistance = Vector2.Distance(newPosition, groundHit ? groundHitPoint : selectedPlayer.transform.position);
-				if (newDistance <= maxHeight && newDistance >= minHeight)
-					transform.position = newPosition;
+				MoveCamera(moveCamera);
 			}
 
-			// Limit by ground
+			// Limit camera height by ground
 			var ground = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundPoint);
 			if (ground)
 			{
-				var desiredHeight = new Vector3(transform.position.x, groundPoint.y + minHeight, transform.position.z);
-				var newPosition = Vector3.SmoothDamp(transform.position, desiredHeight, ref velocity, smoothTime);
-				if (transform.position.y - groundPoint.y <= minHeight)
+				var cameraPosition = transform.position;
+				var desiredHeight = new Vector3(cameraPosition.x, groundPoint.y + minHeight + 0.1f, cameraPosition.z);
+				var newPosition = Vector3.SmoothDamp(cameraPosition, desiredHeight, ref velocity, smoothTime);
+				if (cameraPosition.y - groundPoint.y <= minHeight)
 				{
 					transform.position = newPosition;
 				}	
 			}
+
+			// Limit pointer position by frame rectangle
 			if (gamepadController && cursorPosition.magnitude > 0)
 			{ 
 				pointerPosition += Time.deltaTime * gamepadPointerSpeed * cursorPosition;
@@ -196,21 +189,31 @@ namespace Assets.Scripts
 			var speed = shiftMoveSpeed > 0 ? cameraSpeed * cameraShiftSpeedFactor : cameraSpeed;
 			var forwardMovement = forwardOnGround * direction.y;
 			var horizontalMovement = transform.right * direction.x;
+
 			// Combine movements and scale by speed
 			Vector3 movement = speed * Time.deltaTime * (forwardMovement + horizontalMovement);
 
-			// Apply movement to the camera
-			transform.position += movement;
+			// Apply movement and zoom to the camera
+			var zoomMovement = Time.fixedDeltaTime * zoomSpeed * zoom;
+			transform.position += movement + (transform.forward * zoomMovement);
+			
+			var groundHit = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundHitPoint);
 
 			// Clamp camera position within radius
-			var offset = transform.position - selectedPlayer.transform.position;
-			if (offset.magnitude > maxDistance)
+			var offsetXZ = new Vector2(transform.position.x - selectedPlayer.transform.position.x, transform.position.z - selectedPlayer.transform.position.z);
+			if (offsetXZ.magnitude > maxDistance)
 			{
 				// Clamp the offset to the maximum radius
-				offset = offset.normalized * maxDistance;
+				offsetXZ = offsetXZ.normalized * maxDistance;
+				transform.position = selectedPlayer.transform.position + new Vector3(offsetXZ.x, transform.position.y, offsetXZ.y);
+			}
 
-				// Update camera position
-				transform.position = selectedPlayer.transform.position + offset;
+			// Clamp camera position within height
+			var groundAnchor = groundHit ? groundHitPoint : selectedPlayer.transform.position;
+			var offsetY = transform.position.y - groundAnchor.y;
+			if (offsetY > maxHeight)
+			{
+				transform.position = new Vector3(transform.position.x, Mathf.Clamp(transform.position.y, 0, groundAnchor.y + maxHeight), transform.position.z);
 			}
 		}
 
@@ -239,7 +242,7 @@ namespace Assets.Scripts
 			if (raycast)
 			{
 				worldPosition = hit.point;
-				Debug.DrawRay(drawRay.origin, drawRay.direction * hit.distance + originOffest, Color.green);
+				Debug.DrawRay(drawRay.origin, drawRay.direction * hit.distance + originOffest, Color.red);
 				return true;
 			}
 			return false;
