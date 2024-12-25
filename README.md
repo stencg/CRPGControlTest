@@ -4,7 +4,7 @@
 **Keyboard and mouse control**<br/>
 W/A/S/D: move the camera.<br/>
 Left Shift: speed up the camera movement.<br/>
-Mouse @heel: Zoom the camera.<br/>
+Mouse Wheel: zoom the camera.<br/>
 Left Mouse Button: clicking on the ground at the mouse cursor moves the character.<br/>
 
 **Gamepads control**<br/>
