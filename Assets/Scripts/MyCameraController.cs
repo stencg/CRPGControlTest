@@ -112,14 +112,15 @@ namespace Assets.Scripts
 			}
 
 			// Limit camera height by ground
+			// TODO: use local axis Z of the Camera
 			var ground = GetWorldGround(Camera.main.transform, minHeight, layerMask, out Vector3 groundPoint);
 			if (ground)
 			{
 				var cameraPosition = transform.position;
-				var desiredHeight = new Vector3(cameraPosition.x, groundPoint.y + minHeight + 0.1f, cameraPosition.z);
-				var newPosition = Vector3.SmoothDamp(cameraPosition, desiredHeight, ref velocity, smoothTime);
 				if (cameraPosition.y - groundPoint.y <= minHeight)
 				{
+					var desiredHeight = new Vector3(cameraPosition.x, groundPoint.y + minHeight + 0.1f, cameraPosition.z);
+					var newPosition = Vector3.SmoothDamp(cameraPosition, desiredHeight, ref velocity, smoothTime);
 					transform.position = newPosition;
 				}	
 			}
@@ -191,7 +192,7 @@ namespace Assets.Scripts
 			var horizontalMovement = transform.right * direction.x;
 
 			// Combine movements and scale by speed
-			Vector3 movement = speed * Time.deltaTime * (forwardMovement + horizontalMovement);
+			var movement = speed * Time.deltaTime * (forwardMovement + horizontalMovement);
 
 			// Apply movement and zoom to the camera
 			var zoomMovement = Time.fixedDeltaTime * zoomSpeed * zoom;
